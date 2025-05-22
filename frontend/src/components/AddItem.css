@@ -1,0 +1,176 @@
+.add-item-page {
+  max-width: 520px;
+  margin: 48px auto 0 auto;
+  padding: 0 16px 48px 16px;
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+.add-item-page h2 {
+  color: #222;
+  text-align: center;
+  margin-bottom: 32px;
+  font-size: 2em;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding-top: 24px;
+}
+
+.add-item-container {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.add-item-container h2 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.add-item-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #4a90e2;
+  outline: none;
+}
+
+.form-group input[type="file"] {
+  padding: 6px;
+  background: #f5f5f5;
+  border: 1px dashed #ddd;
+  cursor: pointer;
+}
+
+.form-group input[type="file"]:hover {
+  border-color: #4a90e2;
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.form-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.form-actions button[type="submit"] {
+  background: #4a90e2;
+  color: white;
+}
+
+.form-actions button[type="submit"]:hover {
+  background: #357abd;
+}
+
+.form-actions button[type="button"] {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.form-actions button[type="button"]:hover {
+  background: #e0e0e0;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .add-item-form {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .form-actions button {
+    width: 100%;
+  }
+}
+
+.error-message, .success-message {
+  text-align: center;
+  font-size: 14px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid;
+}
+
+.error-message {
+  color: #d32f2f;
+  background-color: #ffebee;
+  border-color: #ffcdd2;
+}
+
+.success-message {
+  color: #2e7d32;
+  background-color: #e8f5e9;
+  border-color: #c8e6c9;
+}
+
+.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #b0b0b0;
+}
+
+.form-group label::after {
+  content: " *";
+  color: #f44336;
+  font-weight: 600;
+}
+
+.form-group label[for*="vendor"]::after {
+  content: "";
+}
+
+/* 数字输入框样式 */
+.form-group input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.form-group input[type="number"]::-webkit-outer-spin-button,
+.form-group input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+} 
