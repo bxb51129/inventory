@@ -1071,9 +1071,45 @@ function App() {
       const item = items.find(i => i._id === itemId);
       if (!item) return;
 
+      const currentItem = selectedItems.find(i => i.itemId === itemId);
+      if (!currentItem) return;
+
+      // 计算新的数量
       const backorderQuantity = Math.max(0, newQuantity - item.quantity);
       const actualQuantity = Math.min(newQuantity, item.quantity);
 
+      // 如果是编辑模式，需要考虑已有的补货数量
+      if (editingSlip) {
+        const originalItem = editingSlip.items.find(i => i.itemId === itemId);
+        if (originalItem) {
+          // 如果新数量小于等于库存，则没有补货
+          if (newQuantity <= item.quantity) {
+            setSelectedItems(selectedItems.map(item =>
+              item.itemId === itemId
+                ? { 
+                    ...item, 
+                    quantity: newQuantity,
+                    backorderQuantity: 0
+                  }
+                : item
+            ));
+          } else {
+            // 如果新数量大于库存，则计算补货数量
+            setSelectedItems(selectedItems.map(item =>
+              item.itemId === itemId
+                ? { 
+                    ...item, 
+                    quantity: item.quantity,
+                    backorderQuantity: newQuantity - item.quantity
+                  }
+                : item
+            ));
+          }
+          return;
+        }
+      }
+
+      // 非编辑模式下的处理
       setSelectedItems(selectedItems.map(item =>
         item.itemId === itemId
           ? { 
@@ -1172,7 +1208,8 @@ function App() {
       }
       try {
         await axios.delete(`http://localhost:5000/api/packing-slips/${slipId}`);
-        fetchPackingSlips();
+        await fetchPackingSlips();
+        await fetchItems(); // 添加这行来刷新商品列表
       } catch (error) {
         alert(error.response?.data?.error || '取消出库单失败，请重试');
       }
@@ -1385,7 +1422,7 @@ function App() {
       setSelectedItems(slip.items.map(item => ({
         itemId: item.itemId,
         name: item.name,
-        quantity: item.quantity,
+        quantity: item.quantity || 0,
         backorderQuantity: item.backorderQuantity || 0,
         price: item.price
       })));
@@ -2003,7 +2040,7 @@ function App() {
                               overflow:'hidden'
                             }}>
                               <button 
-                                onClick={() => updatePackingSlipItemQuantity(item.itemId, item.quantity - 1)}
+                                onClick={() => updatePackingSlipItemQuantity(item.itemId, (item.quantity + item.backorderQuantity) - 1)}
                                 style={{
                                   padding:'4px 12px',
                                   border:'none',
@@ -2029,10 +2066,10 @@ function App() {
                                 borderRight:'1px solid #ddd',
                                 background:'white'
                               }}>
-                                {item.quantity}
+                                {item.quantity + item.backorderQuantity}
                               </span>
                               <button 
-                                onClick={() => updatePackingSlipItemQuantity(item.itemId, item.quantity + 1)}
+                                onClick={() => updatePackingSlipItemQuantity(item.itemId, (item.quantity + item.backorderQuantity) + 1)}
                                 style={{
                                   padding:'4px 12px',
                                   border:'none',
@@ -2054,7 +2091,7 @@ function App() {
                           </div>
                           <div>${Number(item.price).toFixed(2)}</div>
                           <div style={{color:'#2196F3',fontWeight:500}}>
-                            ${(item.price * item.quantity).toFixed(2)}
+                            ${(item.price * (item.quantity + item.backorderQuantity)).toFixed(2)}
                           </div>
                           <div style={{color:'#f44336',fontWeight:500}}>
                             {item.backorderQuantity || 0}
