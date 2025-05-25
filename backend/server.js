@@ -384,9 +384,37 @@ app.put('/api/packing-slips/:id', async (req, res) => {
       return res.status(404).json({ error: 'Packing slip not found' });
     }
 
+    // 如果请求只包含 isCompleted 字段，说明是标记完成操作
+    if (Object.keys(req.body).length === 1 && 'isCompleted' in req.body) {
+      const updatedSlip = await PackingSlip.findByIdAndUpdate(
+        req.params.id,
+        { isCompleted: true },
+        { new: true }
+      );
+      console.log('Updated packing slip status:', updatedSlip);
+      return res.json(updatedSlip);
+    }
+
+    // 否则是完整的出库单更新
+    const { items, customerName, customerAddress, notes, isCompleted } = req.body;
+    
+    // 计算总金额
+    const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    // 更新出库单
     const updatedSlip = await PackingSlip.findByIdAndUpdate(
       req.params.id,
-      { isCompleted: true },
+      {
+        items: items.map(item => ({
+          ...item,
+          backorderQuantity: item.backorderQuantity || 0
+        })),
+        totalAmount,
+        customerName,
+        customerAddress,
+        notes,
+        isCompleted
+      },
       { new: true }
     );
 

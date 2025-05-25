@@ -11,8 +11,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cart
 
 function calculateAverageCost(purchaseHistory) {
   if (!purchaseHistory || purchaseHistory.length === 0) return 0;
-  const totalCost = purchaseHistory.reduce((sum, p) => sum + p.price * p.quantity, 0);
-  const totalQty = purchaseHistory.reduce((sum, p) => sum + p.quantity, 0);
+  const totalCost = purchaseHistory.reduce((sum, p) => sum + (Number(p.price) * Number(p.quantity)), 0);
+  const totalQty = purchaseHistory.reduce((sum, p) => sum + Number(p.quantity), 0);
   return totalQty === 0 ? 0 : (totalCost / totalQty);
 }
 
@@ -381,7 +381,7 @@ function App() {
                             <span className={`item-quantity ${isLowStock ? 'warning' : ''}`}>现库存数量: {item.quantity}{isLowStock && <span className="low-stock-warning"> (需要补货)</span>}</span>
                           </div>
                           <span style={{color:'#888',fontSize:'0.95rem'}}>
-                            平均成本: ${Number(item.price).toFixed(2)} | 最新进货价: ${Number(latestPrice).toFixed(2)} | 销售价: ${Number(sellingPrice).toFixed(2)} | 补货点: {Number(item.reorderLevel) || 0} | 供货商: {item.vendor?.name || '-'}
+                            平均成本: ${calculateAverageCost(item.purchaseHistory).toFixed(2)} | 最新进货价: ${Number(latestPrice).toFixed(2)} | 销售价: ${Number(sellingPrice).toFixed(2)} | 补货点: {Number(item.reorderLevel) || 0} | 供货商: {item.vendor?.name || '-'}
                           </span>
                         </div>
                         <div className="item-actions" style={{
@@ -1105,7 +1105,7 @@ function App() {
           customerName,
           customerAddress,
           notes,
-          isCompleted: false
+          isCompleted: editingSlip ? editingSlip.isCompleted : false
         };
 
         if (editingSlip) {
@@ -1991,7 +1991,7 @@ function App() {
                 <button onClick={() => {
                   createPackingSlip();
                   setShowCreateForm(false);
-                }}>创建出库单</button>
+                }}>{editingSlip ? '更新出库单' : '创建出库单'}</button>
               </div>
             </div>
 
@@ -2104,20 +2104,6 @@ function App() {
                     </div>
                     <div style={{display:'flex',gap:8}}>
                       <button 
-                        onClick={() => editPackingSlip(slip)}
-                        style={{
-                          padding:'6px 12px',
-                          border:'none',
-                          background:'#2196F3',
-                          color:'white',
-                          borderRadius:4,
-                          cursor:'pointer',
-                          fontSize:'0.9rem'
-                        }}
-                      >
-                        编辑
-                      </button>
-                      <button 
                         onClick={() => exportToPDF(slip)}
                         style={{
                           padding:'6px 12px',
@@ -2144,6 +2130,20 @@ function App() {
                         }}
                       >
                         打印
+                      </button>
+                      <button 
+                        onClick={() => editPackingSlip(slip)}
+                        style={{
+                          padding:'6px 12px',
+                          border:'none',
+                          background:'#ffc107',
+                          color:'white',
+                          borderRadius:4,
+                          cursor:'pointer',
+                          fontSize:'0.9rem'
+                        }}
+                      >
+                        编辑
                       </button>
                       <button 
                         onClick={() => markAsCompleted(slip._id)}
