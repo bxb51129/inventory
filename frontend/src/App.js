@@ -553,6 +553,7 @@ function App() {
     const [editingCustomerId, setEditingCustomerId] = useState(null);
     const [customerSearchTerm, setCustomerSearchTerm] = useState('');
     const [showCustomerForm, setShowCustomerForm] = useState(false);
+    const [showCustomerList, setShowCustomerList] = useState(false);
 
     // 获取所有客户
     const fetchCustomers = async (search = '', retryCount = 0) => {
@@ -661,7 +662,7 @@ function App() {
     const startEditCustomer = (customer) => {
       setEditingCustomerId(customer._id);
       setCustomerName(customer.name);
-      setCustomerContact(customer.contact);
+      setCustomerContact(customer.contact || '');
       setCustomerPhone(customer.phone || '');
       setCustomerEmail(customer.email || '');
       setCustomerAddress(customer.address || '');
@@ -690,6 +691,13 @@ function App() {
       if (e.target.checked) {
         setCustomerAddress(customerCompany);
       }
+    };
+
+    // 选择客户
+    const selectCustomer = (customer) => {
+      setCustomerName(customer.name);
+      setCustomerAddress(customer.address || '');
+      setShowCustomerList(false);
     };
 
     return (
@@ -924,7 +932,13 @@ function App() {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedItems, setSelectedItems] = useState([]);
     const [customerName, setCustomerName] = useState('');
+    const [customerContact, setCustomerContact] = useState('');
+    const [customerPhone, setCustomerPhone] = useState('');
+    const [customerEmail, setCustomerEmail] = useState('');
     const [customerAddress, setCustomerAddress] = useState('');
+    const [customerNotes, setCustomerNotes] = useState('');
+    const [customerCompany, setCustomerCompany] = useState('');
+    const [useCompanyAddress, setUseCompanyAddress] = useState(false);
     const [notes, setNotes] = useState('');
     const [packingSlips, setPackingSlips] = useState([]);
     const [showCreateForm, setShowCreateForm] = useState(false);
@@ -935,6 +949,7 @@ function App() {
     const [selectedItem, setSelectedItem] = useState(null);
     const [itemQuantity, setItemQuantity] = useState(1);
     const [itemPrice, setItemPrice] = useState('');
+    const [showCustomerForm, setShowCustomerForm] = useState(false);
 
     // 获取所有客户
     const fetchCustomers = async (search = '') => {
@@ -1306,9 +1321,219 @@ function App() {
       printWindow.document.close();
     };
 
+    // 添加新客户
+    const addCustomer = () => {
+      const customerData = {
+        name: customerName,
+        contact: customerContact,
+        phone: customerPhone,
+        email: customerEmail,
+        address: customerAddress,
+        notes: customerNotes,
+        company: customerCompany
+      };
+      axios.post('http://localhost:5000/api/customers', customerData)
+        .then(res => {
+          setCustomers([...customers, res.data]);
+          setShowCustomerForm(false);
+          setShowCustomerList(true);
+          // 重置表单
+          setCustomerName('');
+          setCustomerContact('');
+          setCustomerPhone('');
+          setCustomerEmail('');
+          setCustomerAddress('');
+          setCustomerNotes('');
+          setCustomerCompany('');
+          setUseCompanyAddress(false);
+        })
+        .catch(err => {
+          alert(err.response?.data?.error || '添加客户失败，请重试');
+        });
+    };
+
+    // 处理客户表单提交
+    const handleCustomerSubmit = (e) => {
+      e.preventDefault();
+      addCustomer();
+    };
+
+    // 处理公司地址复选框变化
+    const handleUseCompanyAddressChange = (e) => {
+      setUseCompanyAddress(e.target.checked);
+      if (e.target.checked) {
+        setCustomerAddress(customerCompany);
+      }
+    };
+
     return (
       <div className="card">
-        {showCreateForm ? (
+        {showCustomerForm ? (
+          <>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+              <h2 style={{margin:0}}>添加新客户</h2>
+              <button 
+                className="add-item-button"
+                onClick={() => {
+                  setShowCustomerForm(false);
+                  setShowCustomerList(true);
+                }}
+              >
+                返回客户列表
+              </button>
+            </div>
+            <form onSubmit={handleCustomerSubmit} className="customer-form" style={{maxWidth: '600px'}}>
+              <div style={{marginBottom:16}}>
+                <label style={{display:'block',marginBottom:8,color:'#333',fontSize:'0.95rem',fontWeight:500}}>公司名（可选）</label>
+                <input
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="请输入公司名"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '0.95rem'
+                  }}
+                />
+              </div>
+              <div style={{marginBottom:16}}>
+                <label style={{display:'block',marginBottom:8,color:'#333',fontSize:'0.95rem',fontWeight:500}}>联系人</label>
+                <input
+                  value={customerContact}
+                  onChange={(e) => setCustomerContact(e.target.value)}
+                  placeholder="请输入联系人姓名"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '0.95rem'
+                  }}
+                />
+              </div>
+              <div style={{marginBottom:16}}>
+                <label style={{display:'block',marginBottom:8,color:'#333',fontSize:'0.95rem',fontWeight:500}}>公司地址（可选）</label>
+                <input
+                  value={customerCompany}
+                  onChange={(e) => setCustomerCompany(e.target.value)}
+                  placeholder="请输入公司地址"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '0.95rem'
+                  }}
+                />
+              </div>
+              <div style={{marginBottom:16}}>
+                <label style={{display:'block',marginBottom:8,color:'#333',fontSize:'0.95rem',fontWeight:500}}>电话</label>
+                <input
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="请输入电话号码"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '0.95rem'
+                  }}
+                />
+              </div>
+              <div style={{marginBottom:16}}>
+                <label style={{display:'block',marginBottom:8,color:'#333',fontSize:'0.95rem',fontWeight:500}}>邮箱</label>
+                <input
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  placeholder="请输入邮箱地址"
+                  type="email"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '0.95rem'
+                  }}
+                />
+              </div>
+              <div style={{marginBottom:16}}>
+                <label style={{display:'block',marginBottom:8,color:'#333',fontSize:'0.95rem',fontWeight:500}}>收货地址</label>
+                <input
+                  value={customerAddress}
+                  onChange={(e) => setCustomerAddress(e.target.value)}
+                  placeholder="请输入收货地址"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '0.95rem',
+                    marginBottom: 8
+                  }}
+                />
+                <div style={{
+                  display:'flex',
+                  alignItems:'center',
+                  gap:8,
+                  padding:'4px 8px',
+                  background:'#f5f5f5',
+                  borderRadius:4,
+                  width:'fit-content',
+                  whiteSpace:'nowrap'
+                }}>
+                  <input
+                    type="checkbox"
+                    id="useCompanyAddress"
+                    checked={useCompanyAddress}
+                    onChange={handleUseCompanyAddressChange}
+                    style={{margin:0}}
+                  />
+                  <label htmlFor="useCompanyAddress" style={{
+                    fontSize:'0.9rem',
+                    color:'#666',
+                    margin:0,
+                    cursor:'pointer',
+                    whiteSpace:'nowrap'
+                  }}>
+                    与公司地址相同
+                  </label>
+                </div>
+              </div>
+              <div style={{marginBottom:16}}>
+                <label style={{display:'block',marginBottom:8,color:'#333',fontSize:'0.95rem',fontWeight:500}}>备注</label>
+                <textarea
+                  value={customerNotes}
+                  onChange={(e) => setCustomerNotes(e.target.value)}
+                  placeholder="请输入备注信息"
+                  style={{
+                    width: '100%',
+                    minHeight: '80px',
+                    padding: '8px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '0.95rem',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+              <button type="submit" style={{
+                padding: '8px 16px',
+                background: '#2196F3',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '0.95rem'
+              }}>
+                添加客户
+              </button>
+            </form>
+          </>
+        ) : showCreateForm ? (
           <>
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
               <h2 style={{margin:0}}>创建出库单</h2>
@@ -1326,15 +1551,35 @@ function App() {
               </button>
             </div>
             <div className="packing-slip">
-              <div className="customer-info">
+              <div className="customer-info" style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+                maxWidth: '600px',
+                marginBottom: '24px'
+              }}>
                 <div style={{position:'relative'}}>
+                  <label style={{
+                    display:'block',
+                    marginBottom:8,
+                    color:'#333',
+                    fontSize:'0.95rem',
+                    fontWeight:500
+                  }}>客户名称</label>
                   <input
                     type="text"
-                    placeholder="客户名称"
+                    placeholder="请输入客户名称"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     onFocus={() => setShowCustomerList(true)}
                     required
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '0.95rem'
+                    }}
                   />
                   {showCustomerList && (
                     <div style={{
@@ -1351,55 +1596,141 @@ function App() {
                       overflow:'auto'
                     }}>
                       <div style={{padding:8,borderBottom:'1px solid #eee'}}>
-                        <input
-                          type="text"
-                          placeholder="搜索客户..."
-                          value={customerSearchTerm}
-                          onChange={(e) => setCustomerSearchTerm(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              handleCustomerSearch();
-                            }
-                          }}
-                          style={{width:'100%',padding:8}}
-                        />
-                      </div>
-                      <ul style={{margin:0,padding:0,listStyle:'none'}}>
-                        {customers.map(customer => (
-                          <li 
-                            key={customer._id}
-                            onClick={() => selectCustomer(customer)}
+                        <div style={{display:'flex',gap:8}}>
+                          <input
+                            type="text"
+                            placeholder="搜索客户..."
+                            value={customerSearchTerm}
+                            onChange={(e) => setCustomerSearchTerm(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleCustomerSearch();
+                              }
+                            }}
                             style={{
+                              flex:1,
                               padding:8,
+                              border:'1px solid #ddd',
+                              borderRadius:4,
+                              fontSize:'0.95rem'
+                            }}
+                          />
+                          <button
+                            onClick={handleCustomerSearch}
+                            style={{
+                              padding:'8px 16px',
+                              background:'#2196F3',
+                              color:'white',
+                              border:'none',
+                              borderRadius:4,
                               cursor:'pointer',
-                              borderBottom:'1px solid #eee',
-                              ':hover':{background:'#f5f5f5'}
+                              fontSize:'0.9rem'
                             }}
                           >
-                            <div style={{fontWeight:'bold'}}>{customer.name}</div>
-                            {customer.company && (
-                              <div style={{color:'#2196F3',fontSize:'0.9rem'}}>公司: {customer.company}</div>
-                            )}
-                            {customer.contact && (
-                              <div style={{color:'#666',fontSize:'0.9rem'}}>联系人: {customer.contact}</div>
-                            )}
+                            搜索
+                          </button>
+                        </div>
+                      </div>
+                      <ul style={{margin:0,padding:0,listStyle:'none'}}>
+                        {customers.length > 0 ? (
+                          customers.map(customer => (
+                            <li 
+                              key={customer._id}
+                              onClick={() => selectCustomer(customer)}
+                              style={{
+                                padding:8,
+                                cursor:'pointer',
+                                borderBottom:'1px solid #eee',
+                                ':hover':{background:'#f5f5f5'}
+                              }}
+                            >
+                              <div style={{fontWeight:'bold'}}>{customer.name}</div>
+                              {customer.company && (
+                                <div style={{color:'#2196F3',fontSize:'0.9rem'}}>公司: {customer.company}</div>
+                              )}
+                              {customer.contact && (
+                                <div style={{color:'#666',fontSize:'0.9rem'}}>联系人: {customer.contact}</div>
+                              )}
+                            </li>
+                          ))
+                        ) : (
+                          <li style={{
+                            padding: '16px',
+                            textAlign: 'center',
+                            color: '#666',
+                            borderBottom: '1px solid #eee'
+                          }}>
+                            <div style={{marginBottom: '8px'}}>
+                              {customerSearchTerm ? '没有找到匹配的客户' : '暂无客户数据'}
+                            </div>
+                            <button
+                              onClick={() => {
+                                setShowCustomerList(false);
+                                setShowCustomerForm(true);
+                              }}
+                              style={{
+                                padding: '6px 12px',
+                                background: '#2196F3',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '0.9rem'
+                              }}
+                            >
+                              添加新客户
+                            </button>
                           </li>
-                        ))}
+                        )}
                       </ul>
                     </div>
                   )}
                 </div>
-                <input
-                  type="text"
-                  placeholder="客户地址"
-                  value={customerAddress}
-                  onChange={(e) => setCustomerAddress(e.target.value)}
-                />
-                <textarea
-                  placeholder="备注"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
+                <div>
+                  <label style={{
+                    display:'block',
+                    marginBottom:8,
+                    color:'#333',
+                    fontSize:'0.95rem',
+                    fontWeight:500
+                  }}>客户地址</label>
+                  <input
+                    type="text"
+                    placeholder="请输入客户地址"
+                    value={customerAddress}
+                    onChange={(e) => setCustomerAddress(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '0.95rem'
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{
+                    display:'block',
+                    marginBottom:8,
+                    color:'#333',
+                    fontSize:'0.95rem',
+                    fontWeight:500
+                  }}>备注</label>
+                  <textarea
+                    placeholder="请输入备注信息"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    style={{
+                      width: '100%',
+                      minHeight: '80px',
+                      padding: '8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '0.95rem',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
               </div>
               <div className="packing-slip-content">
                 <div className="available-items">
@@ -1440,7 +1771,7 @@ function App() {
                         style={{
                           padding: '8px 16px',
                           backgroundColor: '#f5f5f5',
-                          color: '#666',
+                          color: '#fff',
                           border: '1px solid #ddd',
                           borderRadius: '4px',
                           marginLeft: '10px',
