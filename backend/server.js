@@ -227,7 +227,11 @@ const packingSlipSchema = new mongoose.Schema({
     },
     name: String,
     quantity: Number,
-    price: Number
+    price: Number,
+    backorderQuantity: {
+      type: Number,
+      default: 0
+    }
   }],
   totalAmount: Number,
   customerName: String,
@@ -287,7 +291,10 @@ app.post('/api/packing-slips', async (req, res) => {
     // 创建出库单
     const newSlip = new PackingSlip({
       slipNumber,
-      items,
+      items: items.map(item => ({
+        ...item,
+        backorderQuantity: item.backorderQuantity || 0
+      })),
       totalAmount,
       customerName,
       customerAddress,
@@ -300,10 +307,10 @@ app.post('/api/packing-slips', async (req, res) => {
       if (!inventoryItem) {
         throw new Error(`Item not found: ${item.itemId}`);
       }
-      if (inventoryItem.quantity < item.quantity) {
-        throw new Error(`Insufficient quantity for item: ${inventoryItem.name}`);
-      }
-      inventoryItem.quantity -= item.quantity;
+      
+      // 只减少实际可提供的数量
+      const actualQuantity = Math.min(item.quantity, inventoryItem.quantity);
+      inventoryItem.quantity -= actualQuantity;
       await inventoryItem.save();
     }
 

@@ -950,6 +950,7 @@ function App() {
     const [itemQuantity, setItemQuantity] = useState(1);
     const [itemPrice, setItemPrice] = useState('');
     const [showCustomerForm, setShowCustomerForm] = useState(false);
+    const [editingSlip, setEditingSlip] = useState(null);
 
     // 获取所有客户
     const fetchCustomers = async (search = '') => {
@@ -1095,22 +1096,39 @@ function App() {
           alert('请输入客户名称');
           return;
         }
-        await axios.post('http://localhost:5000/api/packing-slips', {
-          items: selectedItems,
+
+        const slipData = {
+          items: selectedItems.map(item => ({
+            ...item,
+            backorderQuantity: item.backorderQuantity || 0
+          })),
           customerName,
           customerAddress,
           notes,
           isCompleted: false
-        });
-        alert('出库单创建成功！');
+        };
+
+        if (editingSlip) {
+          // 如果是编辑模式，发送 PUT 请求
+          await axios.put(`http://localhost:5000/api/packing-slips/${editingSlip._id}`, slipData);
+          alert('出库单更新成功！');
+        } else {
+          // 如果是新建模式，发送 POST 请求
+          await axios.post('http://localhost:5000/api/packing-slips', slipData);
+          alert('出库单创建成功！');
+        }
+
+        // 重置表单
         setSelectedItems([]);
         setCustomerName('');
         setCustomerAddress('');
         setNotes('');
+        setEditingSlip(null);
+        setShowCreateForm(false);
         fetchItems();
         fetchPackingSlips();
       } catch (error) {
-        alert(error.response?.data?.error || '创建出库单失败，请重试');
+        alert(error.response?.data?.error || '操作失败，请重试');
       }
     };
 
@@ -1366,6 +1384,22 @@ function App() {
       }
     };
 
+    // 在 SlipCard 组件内添加编辑出库单的函数
+    const editPackingSlip = async (slip) => {
+      setEditingSlip(slip);
+      setShowCreateForm(true);
+      setCustomerName(slip.customerName);
+      setCustomerAddress(slip.customerAddress || '');
+      setNotes(slip.notes || '');
+      setSelectedItems(slip.items.map(item => ({
+        itemId: item.itemId,
+        name: item.name,
+        quantity: item.quantity,
+        backorderQuantity: item.backorderQuantity || 0,
+        price: item.price
+      })));
+    };
+
     return (
       <div className="card">
         {showCustomerForm ? (
@@ -1541,10 +1575,10 @@ function App() {
                 className="add-item-button"
                 onClick={() => {
                   setShowCreateForm(false);
-                  setSelectedItems([]);
-                  setCustomerName('');
-                  setCustomerAddress('');
-                  setNotes('');
+        setSelectedItems([]);
+        setCustomerName('');
+        setCustomerAddress('');
+        setNotes('');
                 }}
               >
                 返回出库单列表
@@ -1823,10 +1857,10 @@ function App() {
                         color:'#666'
                       }}>
                         <div>商品名称</div>
-                        <div>数量</div>
+                        <div>供货数量</div>
                         <div>单价</div>
                         <div>小计</div>
-                        <div>待发货数量</div>
+                        <div>缺货数量</div>
                         <div>操作</div>
                         <div></div>
                       </div>
@@ -1973,7 +2007,7 @@ function App() {
                     </div>
                   </div>
                   <div style={{marginBottom:16}}>
-                    <label style={{display:'block',marginBottom:8}}>数量</label>
+                    <label style={{display:'block',marginBottom:8}}>客户需求数量</label>
                     <input
                       type="number"
                       min="1"
@@ -1988,7 +2022,7 @@ function App() {
                       <div style={{color:'#f44336',fontSize:'0.9rem',marginTop:4}}>
                         超出库存: {Number(itemQuantity) - selectedItem.quantity} 个
                         <br/>
-                        将自动计入待发货数量
+                        将自动计入缺货数量
                       </div>
                     )}
                   </div>
@@ -2070,6 +2104,20 @@ function App() {
                     </div>
                     <div style={{display:'flex',gap:8}}>
                       <button 
+                        onClick={() => editPackingSlip(slip)}
+                        style={{
+                          padding:'6px 12px',
+                          border:'none',
+                          background:'#2196F3',
+                          color:'white',
+                          borderRadius:4,
+                          cursor:'pointer',
+                          fontSize:'0.9rem'
+                        }}
+                      >
+                        编辑
+                      </button>
+                      <button 
                         onClick={() => exportToPDF(slip)}
                         style={{
                           padding:'6px 12px',
@@ -2127,76 +2175,69 @@ function App() {
                       </button>
                     </div>
                   </div>
-                  <div style={{padding:'16px'}}>
-                    <div style={{marginBottom:16}}>
-                      <div style={{fontWeight:500,marginBottom:8}}>客户信息</div>
-                      <div style={{color:'#666',fontSize:'0.95rem'}}>
-                        <div>客户名称: {slip.customerName}</div>
-                        {slip.customerAddress && <div>地址: {slip.customerAddress}</div>}
-                      </div>
+                  <div style={{
+                    padding:'16px',
+                    background:'white'
+                  }}>
+                    <div style={{
+                      display:'grid',
+                      gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr',
+                      padding:'12px 16px',
+                      background:'#f5f5f5',
+                      borderBottom:'1px solid #eee',
+                      fontWeight:500
+                    }}>
+                      <div>商品名称</div>
+                      <div>供货数量</div>
+                      <div>单价</div>
+                      <div>小计</div>
+                      <div>缺货数量</div>
                     </div>
-                    <div style={{marginBottom:16}}>
-                      <div style={{fontWeight:500,marginBottom:8}}>商品清单</div>
-                      <div style={{
-                        background:'#f5f5f5',
-                        borderRadius:4,
-                        overflow:'hidden'
-                      }}>
-                        <div style={{
+                    {slip.items.map(item => {
+                      const quantity = item.quantity || 0;
+                      const backorderQuantity = item.backorderQuantity || 0;
+                      const price = Number(item.price) || 0;
+                      const subtotal = quantity * price;
+                      
+                      return (
+                        <div key={item.itemId} style={{
                           display:'grid',
                           gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr',
                           padding:'12px 16px',
-                          background:'#eee',
-                          fontWeight:'bold',
-                          color:'#666',
-                          fontSize:'0.9rem'
+                          borderBottom:'1px solid #eee',
+                          fontSize:'0.95rem'
                         }}>
-                          <div>商品名称</div>
-                          <div>数量</div>
-                          <div>单价</div>
-                          <div>小计</div>
-                          <div>待发货</div>
-                        </div>
-                        {slip.items.map(item => (
-                          <div key={item.itemId} style={{
-                            display:'grid',
-                            gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr',
-                            padding:'12px 16px',
-                            borderTop:'1px solid #eee',
-                            fontSize:'0.95rem'
-                          }}>
-                            <div>{item.name}</div>
-                            <div>{item.quantity}</div>
-                            <div>${Number(item.price).toFixed(2)}</div>
-                            <div style={{color:'#2196F3',fontWeight:500}}>
-                              ${(item.price * item.quantity).toFixed(2)}
-                            </div>
-                            <div style={{color:'#f44336'}}>
-                              {item.backorderQuantity || 0}
-                            </div>
+                          <div>{item.name}</div>
+                          <div>{quantity}</div>
+                          <div>${price.toFixed(2)}</div>
+                          <div style={{color:'#2196F3',fontWeight:500}}>
+                            ${subtotal.toFixed(2)}
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div style={{
-                      display:'flex',
-                      justifyContent:'space-between',
-                      alignItems:'center',
-                      padding:'16px',
-                      background:'#f5f5f5',
-                      borderRadius:4
-                    }}>
-                      <div style={{fontWeight:500}}>
-                        总金额: <span style={{color:'#2196F3',fontSize:'1.1rem'}}>
-                          ${Number(slip.totalAmount).toFixed(2)}
-                        </span>
-                      </div>
-                      {slip.notes && (
-                        <div style={{color:'#666',fontSize:'0.95rem'}}>
-                          备注: {slip.notes}
+                          <div style={{color:'#f44336'}}>
+                            {backorderQuantity}
+                          </div>
                         </div>
-                      )}
+                      );
+                    })}
+                  </div>
+                  <div style={{
+                    display:'flex',
+                    justifyContent:'space-between',
+                    alignItems:'center',
+                    padding:'16px',
+                    background:'#f5f5f5',
+                    borderRadius:4
+                  }}>
+                    <div style={{fontWeight:500}}>
+                      总金额: <span style={{color:'#2196F3',fontSize:'1.1rem'}}>
+                        ${slip.items.reduce((sum, item) => sum + (item.quantity || 0) * (Number(item.price) || 0), 0).toFixed(2)}
+                      </span>
                     </div>
+                    {slip.notes && (
+                      <div style={{color:'#666',fontSize:'0.95rem'}}>
+                        备注: {slip.notes}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -2293,10 +2334,10 @@ function App() {
                           fontSize:'0.9rem'
                         }}>
                           <div>商品名称</div>
-                          <div>数量</div>
+                          <div>供货数量</div>
                           <div>单价</div>
                           <div>小计</div>
-                          <div>待发货</div>
+                          <div>缺货数量</div>
                         </div>
                         {slip.items.map(item => (
                           <div key={item.itemId} style={{
