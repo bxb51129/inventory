@@ -1316,6 +1316,8 @@ function App() {
               body { font-family: Arial, sans-serif; margin: 20px; padding: 20px; }
               .header { text-align: center; margin-bottom: 20px; }
               .info { margin-bottom: 20px; }
+              .customer-info { margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 5px; }
+              .customer-info p { margin: 5px 0; }
               table { width: 100%; border-collapse: collapse; margin: 20px 0; }
               th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
               th { background-color: #f5f5f5; }
@@ -1332,10 +1334,14 @@ function App() {
                 <p>日期: ${new Date(slip.date).toLocaleDateString()}</p>
               </div>
             </div>
-            <div class="customer">
+            <div class="customer-info">
               <h3>客户信息</h3>
-              <p>客户名称: ${slip.customerName}</p>
-              ${slip.customerAddress ? `<p>地址: ${slip.customerAddress}</p>` : ''}
+              <p><strong>客户名称:</strong> ${slip.customerName || '-'}</p>
+              <p><strong>联系人:</strong> ${slip.customerContact || '-'}</p>
+              <p><strong>电话:</strong> ${slip.customerPhone || '-'}</p>
+              <p><strong>邮箱:</strong> ${slip.customerEmail || '-'}</p>
+              <p><strong>公司:</strong> ${slip.customerCompany || '-'}</p>
+              <p><strong>地址:</strong> ${slip.customerAddress || '-'}</p>
             </div>
             <table>
               <thead>
