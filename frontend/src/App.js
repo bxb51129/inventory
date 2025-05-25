@@ -1372,6 +1372,18 @@ function App() {
                 <p>${slip.notes}</p>
               </div>
             ` : ''}
+            <div style="margin-top: 40px; display: flex; justify-content: space-between; padding: 0 40px;">
+              <div style="text-align: center;">
+                <div style="margin-bottom: 8px;">收货人签字</div>
+                <div style="width: 200px; border-bottom: 1px solid #000; margin-bottom: 4px;"></div>
+                <div style="font-size: 12px; color: #666;">日期：${new Date().toLocaleDateString()}</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="margin-bottom: 8px;">发货人签字</div>
+                <div style="width: 200px; border-bottom: 1px solid #000; margin-bottom: 4px;"></div>
+                <div style="font-size: 12px; color: #666;">日期：${new Date().toLocaleDateString()}</div>
+              </div>
+            </div>
             <div class="no-print" style="margin-top: 20px; text-align: center;">
               <button onclick="window.print()">打印</button>
             </div>
