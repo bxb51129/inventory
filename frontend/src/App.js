@@ -1088,15 +1088,6 @@ function App() {
     // 创建出库单
     const createPackingSlip = async () => {
       try {
-        if (selectedItems.length === 0) {
-          alert('请至少添加一个商品');
-          return;
-        }
-        if (!customerName) {
-          alert('请输入客户名称');
-          return;
-        }
-
         const slipData = {
           items: selectedItems.map(item => ({
             ...item,
@@ -1588,159 +1579,255 @@ function App() {
               <div className="customer-info" style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '16px',
-                maxWidth: '600px',
-                marginBottom: '24px'
+                gap: '24px',
+                maxWidth: '800px',
+                marginBottom: '32px',
+                background: '#fff',
+                padding: '24px',
+                borderRadius: '8px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
               }}>
-                <div style={{position:'relative'}}>
-                  <label style={{
-                    display:'block',
-                    marginBottom:8,
-                    color:'#333',
-                    fontSize:'0.95rem',
-                    fontWeight:500
-                  }}>客户名称</label>
-                  <input
-                    type="text"
-                    placeholder="请输入客户名称"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    onFocus={() => setShowCustomerList(true)}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '0.95rem'
-                    }}
-                  />
-                  {showCustomerList && (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '24px'
+                }}>
+                  <div style={{position:'relative'}}>
+                    <label style={{
+                      display:'block',
+                      marginBottom:8,
+                      color:'#333',
+                      fontSize:'0.95rem',
+                      fontWeight:500
+                    }}>选择或搜索客户</label>
                     <div style={{
-                      position:'absolute',
-                      top:'100%',
-                      left:0,
-                      right:0,
-                      background:'white',
-                      border:'1px solid #ddd',
-                      borderRadius:4,
-                      boxShadow:'0 2px 4px rgba(0,0,0,0.1)',
-                      zIndex:1000,
-                      maxHeight:300,
-                      overflow:'auto'
+                      position:'relative',
+                      width:'100%'
                     }}>
-                      <div style={{padding:8,borderBottom:'1px solid #eee'}}>
-                        <div style={{display:'flex',gap:8}}>
-                          <input
-                            type="text"
-                            placeholder="搜索客户..."
-                            value={customerSearchTerm}
-                            onChange={(e) => setCustomerSearchTerm(e.target.value)}
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                handleCustomerSearch();
-                              }
-                            }}
-                            style={{
-                              flex:1,
-                              padding:8,
-                              border:'1px solid #ddd',
-                              borderRadius:4,
-                              fontSize:'0.95rem'
-                            }}
-                          />
-                          <button
-                            onClick={handleCustomerSearch}
-                            style={{
-                              padding:'8px 16px',
-                              background:'#2196F3',
-                              color:'white',
-                              border:'none',
-                              borderRadius:4,
-                              cursor:'pointer',
-                              fontSize:'0.9rem'
-                            }}
-                          >
-                            搜索
-                          </button>
-                        </div>
+                      <div style={{display:'flex',gap:8}}>
+                        <input
+                          type="text"
+                          placeholder="搜索客户..."
+                          value={customerSearchTerm}
+                          onChange={(e) => {
+                            setCustomerSearchTerm(e.target.value);
+                            setCustomerName(e.target.value);
+                          }}
+                          onFocus={() => setShowCustomerList(true)}
+                          style={{
+                            flex:1,
+                            padding: '8px',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            fontSize: '0.95rem'
+                          }}
+                        />
+                        <button
+                          onClick={handleCustomerSearch}
+                          style={{
+                            padding: '8px 16px',
+                            background: '#2196F3',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          搜索
+                        </button>
                       </div>
-                      <ul style={{margin:0,padding:0,listStyle:'none'}}>
-                        {customers.length > 0 ? (
-                          customers.map(customer => (
-                            <li 
-                              key={customer._id}
-                              onClick={() => selectCustomer(customer)}
-                              style={{
-                                padding:8,
-                                cursor:'pointer',
-                                borderBottom:'1px solid #eee',
-                                ':hover':{background:'#f5f5f5'}
-                              }}
-                            >
-                              <div style={{fontWeight:'bold'}}>{customer.name}</div>
-                              {customer.company && (
-                                <div style={{color:'#2196F3',fontSize:'0.9rem'}}>公司: {customer.company}</div>
-                              )}
-                              {customer.contact && (
-                                <div style={{color:'#666',fontSize:'0.9rem'}}>联系人: {customer.contact}</div>
-                              )}
-                            </li>
-                          ))
-                        ) : (
-                          <li style={{
-                            padding: '16px',
-                            textAlign: 'center',
-                            color: '#666',
-                            borderBottom: '1px solid #eee'
-                          }}>
-                            <div style={{marginBottom: '8px'}}>
-                              {customerSearchTerm ? '没有找到匹配的客户' : '暂无客户数据'}
-                            </div>
-                            <button
-                              onClick={() => {
-                                setShowCustomerList(false);
-                                setShowCustomerForm(true);
-                              }}
-                              style={{
-                                padding: '6px 12px',
-                                background: '#2196F3',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '0.9rem'
-                              }}
-                            >
-                              添加新客户
-                            </button>
-                          </li>
-                        )}
-                      </ul>
+                      {showCustomerList && (
+                        <div style={{
+                          position:'absolute',
+                          top:'100%',
+                          left:0,
+                          right:0,
+                          background:'white',
+                          border:'1px solid #ddd',
+                          borderRadius:4,
+                          boxShadow:'0 2px 4px rgba(0,0,0,0.1)',
+                          zIndex:1000,
+                          maxHeight:300,
+                          overflow:'auto',
+                          marginTop:4
+                        }}>
+                          <ul style={{margin:0,padding:0,listStyle:'none'}}>
+                            {customers.length > 0 ? (
+                              customers.map(customer => (
+                                <li 
+                                  key={customer._id}
+                                  onClick={() => {
+                                    selectCustomer(customer);
+                                    setCustomerContact(customer.contact || '');
+                                    setCustomerPhone(customer.phone || '');
+                                    setCustomerEmail(customer.email || '');
+                                    setCustomerCompany(customer.company || '');
+                                    setCustomerAddress(customer.address || '');
+                                    setCustomerSearchTerm(customer.name);
+                                    setShowCustomerList(false);
+                                  }}
+                                  style={{
+                                    padding:8,
+                                    cursor:'pointer',
+                                    borderBottom:'1px solid #eee',
+                                    ':hover':{background:'#f5f5f5'}
+                                  }}
+                                >
+                                  <div style={{fontWeight:'bold'}}>{customer.name}</div>
+                                  {customer.company && (
+                                    <div style={{color:'#2196F3',fontSize:'0.9rem'}}>公司: {customer.company}</div>
+                                  )}
+                                  {customer.contact && (
+                                    <div style={{color:'#666',fontSize:'0.9rem'}}>联系人: {customer.contact}</div>
+                                  )}
+                                </li>
+                              ))
+                            ) : (
+                              <li style={{
+                                padding: '16px',
+                                textAlign: 'center',
+                                color: '#666',
+                                borderBottom: '1px solid #eee'
+                              }}>
+                                <div style={{marginBottom: '8px'}}>
+                                  {customerSearchTerm ? '没有找到匹配的客户' : '暂无客户数据'}
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    setShowCustomerList(false);
+                                    setShowCustomerForm(true);
+                                  }}
+                                  style={{
+                                    padding: '6px 12px',
+                                    background: '#2196F3',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontSize: '0.9rem'
+                                  }}
+                                >
+                                  添加新客户
+                                </button>
+                              </li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div>
-                  <label style={{
-                    display:'block',
-                    marginBottom:8,
-                    color:'#333',
-                    fontSize:'0.95rem',
-                    fontWeight:500
-                  }}>客户地址</label>
-                  <input
-                    type="text"
-                    placeholder="请输入客户地址"
-                    value={customerAddress}
-                    onChange={(e) => setCustomerAddress(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      border: '1px solid #ddd',
-                      borderRadius: '4px',
-                      fontSize: '0.95rem'
-                    }}
-                  />
+                  </div>
+                  <div>
+                    <label style={{
+                      display:'block',
+                      marginBottom:8,
+                      color:'#333',
+                      fontSize:'0.95rem',
+                      fontWeight:500
+                    }}>联系人</label>
+                    <input
+                      type="text"
+                      placeholder="请输入联系人姓名"
+                      value={customerContact}
+                      onChange={(e) => setCustomerContact(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '0.95rem'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{
+                      display:'block',
+                      marginBottom:8,
+                      color:'#333',
+                      fontSize:'0.95rem',
+                      fontWeight:500
+                    }}>电话</label>
+                    <input
+                      type="tel"
+                      placeholder="请输入联系电话"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '0.95rem'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{
+                      display:'block',
+                      marginBottom:8,
+                      color:'#333',
+                      fontSize:'0.95rem',
+                      fontWeight:500
+                    }}>邮箱</label>
+                    <input
+                      type="email"
+                      placeholder="请输入电子邮箱"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '0.95rem'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{
+                      display:'block',
+                      marginBottom:8,
+                      color:'#333',
+                      fontSize:'0.95rem',
+                      fontWeight:500
+                    }}>公司地址</label>
+                    <input
+                      type="text"
+                      placeholder="请输入公司地址"
+                      value={customerCompany}
+                      onChange={(e) => setCustomerCompany(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '0.95rem'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{
+                      display:'block',
+                      marginBottom:8,
+                      color:'#333',
+                      fontSize:'0.95rem',
+                      fontWeight:500
+                    }}>收货地址</label>
+                    <input
+                      type="text"
+                      placeholder="请输入收货地址"
+                      value={customerAddress}
+                      onChange={(e) => setCustomerAddress(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '0.95rem'
+                      }}
+                    />
+                  </div>
                 </div>
                 <div>
                   <label style={{
@@ -1768,7 +1855,7 @@ function App() {
               </div>
               <div className="packing-slip-content">
                 <div className="available-items">
-                  <h3>可用商品</h3>
+                  <h3>可选商品</h3>
                   <div className="search-box">
                     <input
                       type="text"
@@ -1819,22 +1906,56 @@ function App() {
                   <ul className="items-list">
                     {items && items.length > 0 ? (
                       items.map(item => (
-                        <li key={item._id} className="item-card">
-                          <div className="item-info">
-                            <span className="item-name">{item.name}</span>
-                            <span className="item-quantity">库存: {item.quantity}</span>
-                            <span className="item-price">建议售价: ${item.sellingPrice || (item.price * 1.67).toFixed(2)}</span>
-                          </div>
+                        <li key={item._id} className="item-card" style={{
+                          display: 'grid',
+                          gridTemplateColumns: '2fr 1fr 1fr 120px',
+                          alignItems: 'center',
+                          padding: '12px 16px',
+                          background: 'white',
+                          borderRadius: '8px',
+                          border: '1px solid #eee',
+                          marginBottom: '8px',
+                          gap: '24px'
+                        }}>
+                          <span style={{
+                            fontWeight: 500,
+                            fontSize: '0.95rem'
+                          }}>{item.name}</span>
+                          <span style={{
+                            color: '#666',
+                            fontSize: '0.95rem'
+                          }}>库存: {item.quantity}</span>
+                          <span style={{
+                            color: '#2196F3',
+                            fontSize: '0.95rem'
+                          }}>建议售价: ${item.sellingPrice || (item.price * 1.67).toFixed(2)}</span>
                           <button 
                             onClick={() => addToPackingSlip(item)}
                             disabled={item.quantity <= 0}
+                            style={{
+                              padding: '6px 16px',
+                              background: item.quantity <= 0 ? '#f5f5f5' : '#4CAF50',
+                              color: item.quantity <= 0 ? '#999' : 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: item.quantity <= 0 ? 'not-allowed' : 'pointer',
+                              fontSize: '0.9rem',
+                              whiteSpace: 'nowrap',
+                              justifySelf: 'end'
+                            }}
                           >
-                            添加到出库单
+                            {item.quantity <= 0 ? '库存不足' : '添加到出库单'}
                           </button>
                         </li>
                       ))
                     ) : (
-                      <li className="no-items">没有找到商品</li>
+                      <li className="no-items" style={{
+                        textAlign: 'center',
+                        padding: '32px',
+                        background: '#f5f5f5',
+                        borderRadius: '8px',
+                        color: '#666'
+                      }}>没有找到商品</li>
                     )}
                   </ul>
                 </div>
@@ -1989,8 +2110,15 @@ function App() {
               </div>
               <div className="packing-slip-actions">
                 <button onClick={() => {
+                  if (selectedItems.length === 0) {
+                    alert('请至少添加一个商品');
+                    return;
+                  }
+                  if (!customerName) {
+                    alert('请选择或输入客户名称');
+                    return;
+                  }
                   createPackingSlip();
-                  setShowCreateForm(false);
                 }}>{editingSlip ? '更新出库单' : '创建出库单'}</button>
               </div>
             </div>
