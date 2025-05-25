@@ -235,7 +235,11 @@ const packingSlipSchema = new mongoose.Schema({
   }],
   totalAmount: Number,
   customerName: String,
+  customerContact: String,
+  customerPhone: String,
+  customerEmail: String,
   customerAddress: String,
+  customerCompany: String,
   notes: String,
   isCompleted: {
     type: Boolean,
@@ -280,7 +284,7 @@ app.get('/api/packing-slips', async (req, res) => {
 // 创建新出库单
 app.post('/api/packing-slips', async (req, res) => {
   try {
-    const { items, customerName, customerAddress, notes } = req.body;
+    const { items, customerName, customerContact, customerPhone, customerEmail, customerAddress, customerCompany, notes } = req.body;
     
     // 生成出库单号
     const slipNumber = await generateSlipNumber();
@@ -297,7 +301,11 @@ app.post('/api/packing-slips', async (req, res) => {
       })),
       totalAmount,
       customerName,
+      customerContact,
+      customerPhone,
+      customerEmail,
       customerAddress,
+      customerCompany,
       notes
     });
 
@@ -396,7 +404,7 @@ app.put('/api/packing-slips/:id', async (req, res) => {
     }
 
     // 否则是完整的出库单更新
-    const { items, customerName, customerAddress, notes, isCompleted } = req.body;
+    const { items, customerName, customerContact, customerPhone, customerEmail, customerAddress, customerCompany, notes, isCompleted } = req.body;
     
     // 计算总金额
     const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -411,7 +419,11 @@ app.put('/api/packing-slips/:id', async (req, res) => {
         })),
         totalAmount,
         customerName,
+        customerContact,
+        customerPhone,
+        customerEmail,
         customerAddress,
+        customerCompany,
         notes,
         isCompleted
       },

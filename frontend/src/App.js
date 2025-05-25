@@ -1130,7 +1130,11 @@ function App() {
             backorderQuantity: item.backorderQuantity || 0
           })),
           customerName,
+          customerContact,
+          customerPhone,
+          customerEmail,
           customerAddress,
+          customerCompany,
           notes,
           isCompleted: editingSlip ? editingSlip.isCompleted : false
         };
@@ -1148,7 +1152,11 @@ function App() {
         // 重置表单
         setSelectedItems([]);
         setCustomerName('');
+        setCustomerContact('');
+        setCustomerPhone('');
+        setCustomerEmail('');
         setCustomerAddress('');
+        setCustomerCompany('');
         setNotes('');
         setEditingSlip(null);
         setShowCreateForm(false);
@@ -1416,8 +1424,13 @@ function App() {
     const editPackingSlip = async (slip) => {
       setEditingSlip(slip);
       setShowCreateForm(true);
-      setCustomerName(slip.customerName);
+      setCustomerName(slip.customerName || '');
+      setCustomerContact(slip.customerContact || '');
+      setCustomerPhone(slip.customerPhone || '');
+      setCustomerEmail(slip.customerEmail || '');
       setCustomerAddress(slip.customerAddress || '');
+      setCustomerCompany(slip.customerCompany || '');
+      setCustomerSearchTerm(slip.customerName || '');
       setNotes(slip.notes || '');
       setSelectedItems(slip.items.map(item => ({
         itemId: item.itemId,
@@ -1605,8 +1618,13 @@ function App() {
                   setShowCreateForm(false);
         setSelectedItems([]);
         setCustomerName('');
+        setCustomerContact('');
+        setCustomerPhone('');
+        setCustomerEmail('');
         setCustomerAddress('');
+        setCustomerCompany('');
         setNotes('');
+        setEditingSlip(null);
                 }}
               >
                 返回出库单列表
@@ -2233,8 +2251,13 @@ function App() {
                   setShowCreateForm(true);
                   setSelectedItems([]);
                   setCustomerName('');
+                  setCustomerContact('');
+                  setCustomerPhone('');
+                  setCustomerEmail('');
                   setCustomerAddress('');
+                  setCustomerCompany('');
                   setNotes('');
+                  setEditingSlip(null);
                 }}
               >
                 创建出库单
