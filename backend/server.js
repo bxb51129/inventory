@@ -550,6 +550,52 @@ app.put('/api/items/:id', async (req, res) => {
   }
 });
 
+// 添加库存
+app.put('/api/items/:id/add-stock', async (req, res) => {
+  try {
+    const { quantity, price, vendorId } = req.body;
+    const item = await Item.findById(req.params.id);
+    
+    if (!item) {
+      return res.status(404).json({ error: '商品不存在' });
+    }
+
+    // 获取供应商信息
+    let vendor = null;
+    if (vendorId) {
+      vendor = await Vendor.findById(vendorId);
+      if (!vendor) {
+        return res.status(404).json({ error: '供应商不存在' });
+      }
+    }
+
+    // 更新库存数量
+    item.quantity += Number(quantity);
+    
+    // 更新最新价格
+    item.latestPrice = Number(price);
+    
+    // 添加进货记录
+    if (!item.purchaseHistory) {
+      item.purchaseHistory = [];
+    }
+    
+    item.purchaseHistory.push({
+      date: new Date(),
+      quantity: Number(quantity),
+      price: Number(price),
+      vendorId: vendor?._id,
+      vendorName: vendor?.name
+    });
+
+    await item.save();
+    res.json(item);
+  } catch (error) {
+    console.error('Error adding stock:', error);
+    res.status(500).json({ error: '添加库存失败' });
+  }
+});
+
 // 客户模型
 const customerSchema = new mongoose.Schema({
   name: {

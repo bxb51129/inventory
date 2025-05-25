@@ -94,6 +94,30 @@ function App() {
     const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
     const [selectedItemHistory, setSelectedItemHistory] = useState(null);
     const [editingItem, setEditingItem] = useState(null);
+    const [showAddStockModal, setShowAddStockModal] = useState(false);
+    const [selectedItemForStock, setSelectedItemForStock] = useState(null);
+    const [stockQuantity, setStockQuantity] = useState('');
+    const [stockPrice, setStockPrice] = useState('');
+    const [vendors, setVendors] = useState([]);
+    const [selectedVendor, setSelectedVendor] = useState('');
+
+    // 获取商品列表
+    useEffect(() => {
+      fetchItems();
+    }, []);
+
+    // 获取供应商列表
+    useEffect(() => {
+      const fetchVendors = async () => {
+        try {
+          const response = await axios.get('http://localhost:5000/api/vendors');
+          setVendors(response.data);
+        } catch (error) {
+          console.error('Error fetching vendors:', error);
+        }
+      };
+      fetchVendors();
+    }, []);
 
     const calculateSellingPrice = (price) => {
       if (!price || isNaN(price)) return 0;
@@ -132,10 +156,6 @@ function App() {
       }
     };
 
-    useEffect(() => {
-      fetchItems();
-    }, []);
-
     const handleSearch = () => {
       fetchItems(searchTerm);
     };
@@ -170,6 +190,45 @@ function App() {
     const viewPurchaseHistory = (item) => {
       setSelectedItemHistory(item);
       setShowPurchaseHistory(true);
+    };
+
+    // 添加库存
+    const handleAddStock = async () => {
+      if (!stockQuantity || !stockPrice || !selectedVendor) {
+        alert('请填写所有必填字段');
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:5000/api/items/${selectedItemForStock._id}/add-stock`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            quantity: Number(stockQuantity),
+            price: Number(stockPrice),
+            vendorId: selectedVendor
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('添加库存失败');
+        }
+
+        const updatedItem = await response.json();
+        setItems(items.map(item => 
+          item._id === updatedItem._id ? updatedItem : item
+        ));
+        setShowAddStockModal(false);
+        setSelectedItemForStock(null);
+        setStockQuantity('');
+        setStockPrice('');
+        setSelectedVendor('');
+      } catch (error) {
+        console.error('Error adding stock:', error);
+        alert('添加库存失败');
+      }
     };
 
     if (showAddItemForm) {
@@ -331,6 +390,16 @@ function App() {
                           justifyContent: 'flex-end',
                           marginTop: 8
                         }}>
+                          <button 
+                            style={{fontSize:'0.85rem',padding:'2px 8px'}} 
+                            onClick={() => {
+                              setSelectedItemForStock(item);
+                              setStockPrice(item.latestPrice || item.price);
+                              setShowAddStockModal(true);
+                            }}
+                          >
+                            添加库存
+                          </button>
                           <button style={{fontSize:'0.85rem',padding:'2px 8px'}} onClick={() => startEdit(item)}>编辑</button>
                           <button style={{fontSize:'0.85rem',padding:'2px 8px'}} onClick={() => deleteItem(item._id)}>删除</button>
                           <button style={{fontSize:'0.85rem',padding:'2px 8px'}} onClick={() => viewPurchaseHistory(item)}>查看进货历史</button>
@@ -407,6 +476,63 @@ function App() {
                 )}
               </div>
               <button onClick={() => setShowPurchaseHistory(false)}>关闭</button>
+            </div>
+          </div>
+        )}
+
+        {/* 添加库存模态框 */}
+        {showAddStockModal && selectedItemForStock && (
+          <div className="modal">
+            <div className="modal-content">
+              <h2>添加库存</h2>
+              <p>商品名称: {selectedItemForStock.name}</p>
+              <p>当前库存: {selectedItemForStock.quantity}</p>
+              <div className="form-group">
+                <label>添加数量:</label>
+                <input
+                  type="number"
+                  value={stockQuantity}
+                  onChange={(e) => setStockQuantity(e.target.value)}
+                  min="1"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>进货价格:</label>
+                <input
+                  type="number"
+                  value={stockPrice}
+                  onChange={(e) => setStockPrice(e.target.value)}
+                  min="0"
+                  step="0.01"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>选择供应商:</label>
+                <select
+                  value={selectedVendor}
+                  onChange={(e) => setSelectedVendor(e.target.value)}
+                  required
+                >
+                  <option value="">请选择供应商</option>
+                  {vendors.map(vendor => (
+                    <option key={vendor._id} value={vendor._id}>
+                      {vendor.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="modal-buttons">
+                <button onClick={handleAddStock}>确认</button>
+                <button onClick={() => {
+                  setShowAddStockModal(false);
+                  setSelectedItemForStock(null);
+                  setStockQuantity('');
+                  setStockPrice('');
+                  setSelectedVendor('');
+                }}>取消</button>
+              </div>
             </div>
           </div>
         )}
@@ -1030,62 +1156,64 @@ function App() {
 
     // 导出PDF
     const exportToPDF = async (slip) => {
-      const element = document.createElement('div');
-      element.className = 'pdf-content';
-      element.innerHTML = `
-        <div class="pdf-header">
-          <h2>出库单</h2>
-          <div class="pdf-info">
-            <p>出库单号: ${slip.slipNumber}</p>
-            <p>日期: ${new Date(slip.date).toLocaleDateString()}</p>
-          </div>
-        </div>
-        <div class="pdf-customer">
-          <h3>客户信息</h3>
-          <p>客户名称: ${slip.customerName}</p>
-          ${slip.customerAddress ? `<p>地址: ${slip.customerAddress}</p>` : ''}
-        </div>
-        <div class="pdf-items">
-          <h3>商品清单</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>商品名称</th>
-                <th>数量</th>
-                <th>单价</th>
-                <th>小计</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${slip.items.map(item => `
-                <tr>
-                  <td>${item.name}</td>
-                  <td>${item.quantity}</td>
-                  <td>$${item.price}</td>
-                  <td>$${item.price * item.quantity}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-        <div class="pdf-total">
-          <h3>总金额: $${slip.totalAmount}</h3>
-        </div>
-        ${slip.notes ? `
-          <div class="pdf-notes">
-            <h3>备注</h3>
-            <p>${slip.notes}</p>
-          </div>
-        ` : ''}
-      `;
-      document.body.appendChild(element);
       try {
-        const canvas = await window.html2canvas(element, {
+        const element = document.createElement('div');
+        element.className = 'pdf-content';
+        element.innerHTML = `
+          <div class="pdf-header">
+            <h2>出库单</h2>
+            <div class="pdf-info">
+              <p>出库单号: ${slip.slipNumber}</p>
+              <p>日期: ${new Date(slip.date).toLocaleDateString()}</p>
+            </div>
+          </div>
+          <div class="pdf-customer">
+            <h3>客户信息</h3>
+            <p>客户名称: ${slip.customerName}</p>
+            ${slip.customerAddress ? `<p>地址: ${slip.customerAddress}</p>` : ''}
+          </div>
+          <div class="pdf-items">
+            <h3>商品清单</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>商品名称</th>
+                  <th>数量</th>
+                  <th>单价</th>
+                  <th>小计</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${slip.items.map(item => `
+                  <tr>
+                    <td>${item.name}</td>
+                    <td>${item.quantity}</td>
+                    <td>$${Number(item.price).toFixed(2)}</td>
+                    <td>$${(Number(item.price) * Number(item.quantity)).toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="pdf-total">
+            <h3>总金额: $${Number(slip.totalAmount).toFixed(2)}</h3>
+          </div>
+          ${slip.notes ? `
+            <div class="pdf-notes">
+              <h3>备注</h3>
+              <p>${slip.notes}</p>
+            </div>
+          ` : ''}
+        `;
+        document.body.appendChild(element);
+
+        const canvas = await html2canvas(element, {
           scale: 2,
           useCORS: true,
           logging: false
         });
-        const pdf = new window.jsPDF('p', 'mm', 'a4');
+
+        const pdf = new jsPDF('p', 'mm', 'a4');
         const imgData = canvas.toDataURL('image/png');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -1094,12 +1222,17 @@ function App() {
         const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
         const imgX = (pdfWidth - imgWidth * ratio) / 2;
         const imgY = 30;
+
         pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
         pdf.save(`出库单_${slip.slipNumber}.pdf`);
       } catch (error) {
+        console.error('Error generating PDF:', error);
         alert('生成PDF失败，请重试');
       } finally {
-        document.body.removeChild(element);
+        const element = document.querySelector('.pdf-content');
+        if (element) {
+          document.body.removeChild(element);
+        }
       }
     };
 
@@ -1149,14 +1282,14 @@ function App() {
                   <tr>
                     <td>${item.name}</td>
                     <td>${item.quantity}</td>
-                    <td>$${item.price}</td>
-                    <td>$${item.price * item.quantity}</td>
+                    <td>$${Number(item.price).toFixed(2)}</td>
+                    <td>$${(item.price * item.quantity).toFixed(2)}</td>
                   </tr>
                 `).join('')}
               </tbody>
             </table>
             <div class="total">
-              总金额: $${slip.totalAmount}
+              总金额: $${Number(slip.totalAmount).toFixed(2)}
             </div>
             ${slip.notes ? `
               <div class="notes">
@@ -1277,13 +1410,46 @@ function App() {
                       placeholder="搜索商品..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          handleSearch();
-                        }
+                      style={{
+                        padding: '8px',
+                        width: '200px',
+                        marginRight: '10px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px'
                       }}
                     />
-                    <button onClick={handleSearch}>搜索</button>
+                    <button
+                      onClick={handleSearch}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      搜索
+                    </button>
+                    {searchTerm && (
+                      <button
+                        onClick={() => {
+                          setSearchTerm('');
+                          fetchItems();
+                        }}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#f5f5f5',
+                          color: '#666',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          marginLeft: '10px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        取消搜索
+                      </button>
+                    )}
                   </div>
                   <ul className="items-list">
                     {items && items.length > 0 ? (

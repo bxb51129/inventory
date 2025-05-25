@@ -12,6 +12,15 @@ function AddItem({ onItemAdded, onCancel, editingItem = null }) {
   const [selectedVendorId, setSelectedVendorId] = useState('');
   const [selectedVendorName, setSelectedVendorName] = useState('');
   const [vendors, setVendors] = useState([]);
+  const [showNewVendorForm, setShowNewVendorForm] = useState(false);
+  const [newVendor, setNewVendor] = useState({
+    name: '',
+    contact: '',
+    phone: '',
+    email: '',
+    address: '',
+    notes: ''
+  });
 
   useEffect(() => {
     // 获取供货商列表
@@ -102,6 +111,28 @@ function AddItem({ onItemAdded, onCancel, editingItem = null }) {
     } catch (err) {
       console.error('Error saving item:', err);
       alert(err.response?.data?.error || '保存失败，请重试');
+    }
+  };
+
+  const handleCreateVendor = async () => {
+    try {
+      const response = await axios.post('http://localhost:5000/api/vendors', newVendor);
+      const createdVendor = response.data;
+      setVendors([...vendors, createdVendor]);
+      setSelectedVendorId(createdVendor._id);
+      setSelectedVendorName(createdVendor.name);
+      setShowNewVendorForm(false);
+      setNewVendor({
+        name: '',
+        contact: '',
+        phone: '',
+        email: '',
+        address: '',
+        notes: ''
+      });
+    } catch (error) {
+      console.error('Error creating vendor:', error);
+      alert('创建供应商失败：' + (error.response?.data?.error || error.message));
     }
   };
 
@@ -215,31 +246,114 @@ function AddItem({ onItemAdded, onCancel, editingItem = null }) {
           <input 
             id="item-selling-price"
             value={sellingPrice}
-            readOnly
+            onChange={e => setSellingPrice(e.target.value)}
             placeholder="销售价"
             type="number"
+            required
           />
         </div>
 
         <div className="form-group">
           <label htmlFor="item-vendor">供货商</label>
-          <select
-            id="item-vendor"
-            value={selectedVendorId}
-            onChange={(e) => {
-              const vendorId = e.target.value;
-              const selectedVendor = vendors.find(v => v._id === vendorId);
-              setSelectedVendorId(vendorId);
-              setSelectedVendorName(selectedVendor ? selectedVendor.name : '');
-            }}
-            required
-          >
-            <option value="">请选择供货商</option>
-            {vendors.map(vendor => (
-              <option key={vendor._id} value={vendor._id}>{vendor.name}</option>
-            ))}
-          </select>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <select
+              id="item-vendor"
+              value={selectedVendorId}
+              onChange={(e) => {
+                const vendorId = e.target.value;
+                const selectedVendor = vendors.find(v => v._id === vendorId);
+                setSelectedVendorId(vendorId);
+                setSelectedVendorName(selectedVendor ? selectedVendor.name : '');
+              }}
+              required
+              style={{ flex: 1 }}
+            >
+              <option value="">请选择供货商</option>
+              {vendors.map(vendor => (
+                <option key={vendor._id} value={vendor._id}>{vendor.name}</option>
+              ))}
+            </select>
+            <button 
+              type="button" 
+              onClick={() => setShowNewVendorForm(true)}
+              style={{ padding: '4px 8px', fontSize: '0.9rem' }}
+            >
+              新建供应商
+            </button>
+          </div>
         </div>
+
+        {showNewVendorForm && (
+          <div className="modal" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="modal-content" style={{ background: 'white', padding: '20px', borderRadius: '8px', width: '400px', maxWidth: '90%' }}>
+              <h3>新建供应商</h3>
+              <div className="form-group">
+                <label>供应商名称</label>
+                <input
+                  type="text"
+                  value={newVendor.name}
+                  onChange={(e) => setNewVendor({...newVendor, name: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>联系人</label>
+                <input
+                  type="text"
+                  value={newVendor.contact}
+                  onChange={(e) => setNewVendor({...newVendor, contact: e.target.value})}
+                />
+              </div>
+              <div className="form-group">
+                <label>电话</label>
+                <input
+                  type="text"
+                  value={newVendor.phone}
+                  onChange={(e) => setNewVendor({...newVendor, phone: e.target.value})}
+                />
+              </div>
+              <div className="form-group">
+                <label>邮箱</label>
+                <input
+                  type="email"
+                  value={newVendor.email}
+                  onChange={(e) => setNewVendor({...newVendor, email: e.target.value})}
+                />
+              </div>
+              <div className="form-group">
+                <label>地址</label>
+                <input
+                  type="text"
+                  value={newVendor.address}
+                  onChange={(e) => setNewVendor({...newVendor, address: e.target.value})}
+                />
+              </div>
+              <div className="form-group">
+                <label>备注</label>
+                <textarea
+                  value={newVendor.notes}
+                  onChange={(e) => setNewVendor({...newVendor, notes: e.target.value})}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '16px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowNewVendorForm(false)}
+                  style={{ background: '#f5f5f5', color: '#666' }}
+                >
+                  取消
+                </button>
+                <button 
+                  type="button" 
+                  onClick={handleCreateVendor}
+                  disabled={!newVendor.name}
+                >
+                  创建
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="form-group">
           <label htmlFor="item-reorder-level">补货点</label>
