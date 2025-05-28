@@ -6,6 +6,7 @@ import html2canvas from 'html2canvas';
 import AddItem from './components/AddItem';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ResetPasswordDirect from './pages/ResetPasswordDirect';
 import './App.css';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 
@@ -3179,6 +3180,7 @@ function App() {
       <Routes future={{ v7_relativeSplatPath: true }}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/reset-password-direct" element={<ResetPasswordDirect />} />
         <Route path="/*" element={
           <RequireAuth>
             <div>

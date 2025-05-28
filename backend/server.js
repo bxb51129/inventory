@@ -980,4 +980,24 @@ vendorRouter.get('/:id/purchase-history', async (req, res) => {
 // 3. 挂载路由
 app.use('/api/vendors', vendorRouter);
 
+// 直接重置密码（开发/测试用，生产环境请加权限校验！）
+app.post('/api/reset-password-direct', async (req, res) => {
+  const { username, newPassword } = req.body;
+  if (!username || !newPassword) {
+    return res.status(400).json({ message: '用户名和新密码必填' });
+  }
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ message: '用户不存在' });
+    }
+    const hash = await bcrypt.hash(newPassword, 10);
+    user.password = hash;
+    await user.save();
+    res.json({ message: '密码重置成功' });
+  } catch (err) {
+    res.status(500).json({ message: '重置失败', error: err.message });
+  }
+});
+
 app.listen(5000, () => console.log('Server running on port 5000')); 
