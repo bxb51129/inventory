@@ -2963,6 +2963,11 @@ function App() {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const [showLowStockOnly, setShowLowStockOnly] = useState(false);
+    const displayData = showLowStockOnly
+      ? data.filter(item => item.stock <= (item.reorderLevel || 0))
+      : data;
+
     const handleVendorSelect = (e) => {
       const vendorId = e.target.value;
       setSelectedVendorId(vendorId);
@@ -3074,6 +3079,30 @@ function App() {
         </div>
         {tab==='stock' && (
           <>
+            <div style={{marginBottom:12, display:'flex', alignItems:'center', justifyContent:'flex-start'}}>
+              <label style={{fontSize:'15px',color:'#1976D2',userSelect:'none', display:'inline-flex', alignItems:'center', whiteSpace:'nowrap', margin:0}}>
+                <input
+                  type="checkbox"
+                  checked={showLowStockOnly}
+                  onChange={e => setShowLowStockOnly(e.target.checked)}
+                  style={{marginRight:6, verticalAlign:'middle'}}
+                />
+                只看低库存商品
+              </label>
+            </div>
+            <div style={{width:'100%',height:420,background:'#fff',borderRadius:8,boxShadow:'0 2px 8px rgba(0,0,0,0.04)',padding:24,marginBottom:24}}>
+              <h3 style={{margin:'0 0 16px 0'}}>库存结构总览</h3>
+              <ResponsiveContainer width="100%" height={350}>
+                <BarChart data={displayData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" interval={0} angle={-20} textAnchor="end" height={60} />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="stock" fill="#1976D2" name="库存数量" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
             <table style={{width:'100%',borderCollapse:'collapse',marginTop:16}}>
               <thead>
                 <tr style={{background:'#f5f5f5'}}>
@@ -3084,7 +3113,7 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {data.map(row => (
+                {displayData.map(row => (
                   <tr key={row.name}>
                     <td style={{padding:8,border:'1px solid #eee'}}>{row.name}</td>
                     <td style={{padding:8,border:'1px solid #eee'}}>{row.inQty}</td>
